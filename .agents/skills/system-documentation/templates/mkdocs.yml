@@ -1,0 +1,20 @@
+site_name: Documentação do Sistema
+site_dir: mkdoc-site
+docs_dir: docs
+theme:
+  name: material
+  language: pt-BR
+  font: false
+nav:
+  - Início: index.md
+  - Fluxo dos dados: data-lineage.md
+  - Arquitetura: architecture.md
+  - Avaliação técnica: technical-review.md
+markdown_extensions:
+  - tables
+  - toc
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format

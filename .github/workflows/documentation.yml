@@ -1,0 +1,73 @@
+name: Documentation
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install documentation dependencies
+        run: python -m pip install 'mkdocs==1.6.1' 'mkdocs-material>=9.6,<10'
+      - name: Detect documentation impact
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+          PUSH_HEAD: ${{ github.sha }}
+        shell: bash
+        run: |
+          mkdir -p documentation-reports
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            base="$PR_BASE"
+            head="$PR_HEAD"
+          else
+            head="$PUSH_HEAD"
+            base="$PUSH_BASE"
+            if [ -z "$base" ] || [[ "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+              if git rev-parse --verify "$head^" >/dev/null 2>&1; then
+                base=$(git rev-parse "$head^")
+              else
+                base="$head"
+              fi
+            fi
+          fi
+          python .agents/skills/system-documentation/scripts/detect_changes.py \
+            --repo . --base "$base" --head "$head" \
+            --output documentation-reports/impact.json
+      - name: Summarize impact (no AI)
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          report = json.loads(Path('documentation-reports/impact.json').read_text(encoding='utf-8'))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
+              summary.write('## Documentation impact\n\n')
+              summary.write(f"Decision: `{report['decision']}`\n\n")
+              summary.write('See impact.json for affected paths. No AI was called and no source documentation was changed.\n\n')
+              if report['decision'] in ('review_ai', 'manual_review'):
+                  summary.write('Manual follow-up required: review the relevant diff and documentation. This job does not certify semantic correctness.\n')
+              summary.write('\nNew branches/manual runs fall back to the last commit; a root commit has no prior baseline.\n')
+          PY
+      - name: Validate and build local documentation
+        run: python .agents/skills/system-documentation/scripts/validate_docs.py --repo . --build
+      - name: Upload impact report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-impact
+          path: documentation-reports/impact.json
+          if-no-files-found: warn

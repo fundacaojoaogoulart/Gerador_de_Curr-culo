@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "globs": [".github/workflows/documentation.yml", ".agents/skills/system-documentation/scripts/*.py"],
+      "documents": ["docs/documentation-maintenance.md", "docs/index.md"],
+      "decision": "review_ai",
+      "reason": "Mudanças no CI e nos utilitários podem alterar os comandos e o fluxo de manutenção documentados."
+    },
+    {
+      "globs": ["Gerador_de_Curriculo.py"],
+      "documents": ["docs/index.md", "docs/architecture.md", "docs/data-lineage.md", "docs/technical-review.md"],
+      "decision": "review_ai",
+      "reason": "Entrada única: GUI, contrato Excel, seleção, substituição Word, fotos, saídas e erros; revisar somente os trechos documentais afetados pelo diff."
+    },
+    {
+      "globs": ["requeriments.txt"],
+      "documents": ["docs/architecture.md", "docs/technical-review.md"],
+      "decision": "review_ai",
+      "reason": "Dependências definem requisitos de execução, leitura de dados e conversão de documentos."
+    },
+    {
+      "globs": ["README.md"],
+      "documents": ["docs/index.md", "docs/architecture.md", "docs/technical-review.md"],
+      "decision": "review_ai",
+      "reason": "Orientações de uso e requisitos devem ser confrontados com a implementação e divergências registradas."
+    },
+    {
+      "globs": ["Minibios_Base.xlsx", "Curriculo.docx", "Guia do Gerador de Currículos - Automatizador da Geração de Currículos.pdf"],
+      "documents": ["docs/architecture.md", "docs/data-lineage.md", "docs/technical-review.md"],
+      "decision": "manual_review",
+      "reason": "Entradas esperadas e guia binário podem alterar schema, modelo ou instruções; não abrir automaticamente dados pessoais ou binários. Exigem revisão autorizada."
+    },
+    {
+      "globs": ["mkdocs.yml"],
+      "documents": ["docs/index.md"],
+      "decision": "review_ai",
+      "reason": "Configuração da navegação e renderização local; conferir comandos e apresentação documentados."
+    },
+    {
+      "globs": ["mkdoc-site/**"],
+      "documents": [],
+      "decision": "skip",
+      "reason": "HTML derivado pelo MkDocs; não é fonte das regras do aplicativo e deve ser regenerado a partir dos Markdown."
+    }
+  ]
+}
